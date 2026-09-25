@@ -25,20 +25,15 @@ struct SettingsSheet: View {
     private var paneKey: String { "\(tab):\(q.isEmpty ? "" : "q")" }
 
     var body: some View {
-        ZStack {
-            T.scrim.ignoresSafeArea().onTapGesture { openSel = nil }
-            HStack(spacing: 0) {
-                sidebar
-                Rectangle().fill(T.sep).frame(width: 1)
-                main
-            }
-            .frame(maxWidth: 940, maxHeight: 660)
-            .background(T.bg)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: .black.opacity(0.06), radius: 3, y: 2)
-            .shadow(color: .black.opacity(0.16), radius: 30, y: 24)
-            .padding(24)
+        // Presented as a native sheet: the system supplies the scrim, the glass edge and
+        // the shadow, and the sheet sits above the window's toolbar.
+        HStack(spacing: 0) {
+            sidebar
+            Rectangle().fill(T.sep).frame(width: 1)
+            main
         }
+        .frame(width: 880, height: 600)
+        .background(T.bg)
         .onExitCommand { isOpen = false }
     }
 

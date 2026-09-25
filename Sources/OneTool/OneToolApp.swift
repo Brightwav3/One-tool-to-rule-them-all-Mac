@@ -13,19 +13,25 @@ struct OneToolApp: App {
                 .onAppear { store.applyTheme(); NSApp.activate(ignoringOtherApps: true) }
         }
         .defaultSize(width: 980, height: 700)
-        .windowStyle(.hiddenTitleBar)
+        .windowToolbarStyle(.unified)
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") { NotificationCenter.default.post(name: .openSettings, object: nil) }
+                    .keyboardShortcut(",", modifiers: .command)
+            }
+        }
     }
 }
 
 /// index.html's .app: the top bar over the work card, with Settings as a sheet above both.
 struct ContentView: View {
+    @EnvironmentObject var store: SettingsStore
     @State private var page: Page = .convert
     @State private var settingsOpen = false
 
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                TopBar(page: $page, openSettings: { settingsOpen = true }, helperDot: Helpers.missing > 0)
                 Group {
                     switch page {
                     case .convert: ConvertView()
@@ -42,15 +48,26 @@ struct ContentView: View {
                 .shadow(color: .black.opacity(0.08), radius: 11, y: 8)
             }
             .background(T.bg)
-            .ignoresSafeArea()
-
-            if settingsOpen {
-                SettingsSheet(isOpen: $settingsOpen).ignoresSafeArea().transition(.opacity)
-            }
         }
-        .background(WindowChrome())
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                CogButton(dot: Helpers.missing > 0) { settingsOpen = true }
+            }
+            ToolbarItem(placement: .principal) {
+                Picker("Page", selection: $page) {
+                    ForEach(Page.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented).fixedSize()
+            }
+            ToolbarItem(placement: .primaryAction) { SearchButton() }
+        }
+        .navigationTitle("")
         .focusEffectDisabled()
-        .animation(.easeOut(duration: 0.25), value: settingsOpen)
-        .background(Button("") { settingsOpen = true }.keyboardShortcut(",", modifiers: .command).hidden())
+        .sheet(isPresented: $settingsOpen) {
+            SettingsSheet(isOpen: $settingsOpen).environmentObject(store)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in settingsOpen = true }
     }
 }
+
+extension Notification.Name { static let openSettings = Notification.Name("onetool.openSettings") }
