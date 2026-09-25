@@ -2,24 +2,37 @@ import SwiftUI
 
 @main
 struct OneToolApp: App {
+    @StateObject private var store = SettingsStore()
+    init() { NSApplication.shared.setActivationPolicy(.regular) }
+
     var body: some Scene {
         WindowGroup("One Tool") {
             ContentView()
-                .frame(minWidth: 640, minHeight: 420)
+                .environmentObject(store)
+                .frame(minWidth: 801, minHeight: 491)
+                .onAppear { store.applyTheme(); NSApp.activate(ignoringOtherApps: true) }
         }
+        .defaultSize(width: 980, height: 700)
+        .windowStyle(.hiddenTitleBar)
     }
 }
 
 struct ContentView: View {
+    @State private var settingsOpen = true
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "arrow.triangle.2.circlepath.doc.on.clipboard")
-                .font(.system(size: 48))
-            Text("One Tool to Rule Them All")
-                .font(.title)
-            Text("Drop files here to convert — native macOS rewrite in progress.")
-                .foregroundStyle(.secondary)
+        ZStack {
+            T.bg.ignoresSafeArea()
+            VStack(spacing: 12) {
+                Text("One Tool to Rule Them All").css(25, .semibold)
+                Text("Native rewrite — only Settings is ported so far.").css(13, .regular, T.t3)
+                SecondaryButton("Open settings  ⌘,") { settingsOpen = true }
+            }
+            if settingsOpen {
+                SettingsSheet(isOpen: $settingsOpen)
+                    .transition(.opacity)
+            }
         }
-        .padding()
+        .animation(.easeOut(duration: 0.25), value: settingsOpen)
+        .background(Button("") { settingsOpen = true }.keyboardShortcut(",", modifiers: .command).hidden())
     }
 }
