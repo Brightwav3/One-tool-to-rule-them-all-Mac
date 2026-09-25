@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "OneTool",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v15)],
     targets: [
         .executableTarget(name: "OneTool", path: "Sources/OneTool"),
         .testTarget(name: "OneToolTests", dependencies: ["OneTool"], path: "Tests/OneToolTests"),

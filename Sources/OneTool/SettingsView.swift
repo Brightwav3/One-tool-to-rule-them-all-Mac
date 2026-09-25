@@ -48,7 +48,7 @@ struct SettingsSheet: View {
             HStack(spacing: 8) {
                 Text("⌕").css(12, .regular, T.t3)
                 TextField("", text: $query, prompt: Text("Search settings…").foregroundStyle(T.t3))
-                    .textFieldStyle(.plain).font(T.ui(12)).tracking(12 * -0.018).foregroundStyle(T.t1)
+                    .textFieldStyle(.plain).font(T.ui(12)).foregroundStyle(T.t1)
                     .focused($searchFocused)
             }
             .padding(.horizontal, 10).frame(height: 32)

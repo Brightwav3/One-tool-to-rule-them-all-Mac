@@ -22,6 +22,10 @@ enum T {
     static let surface = dyn(hex(0xffffff), hex(0x000000))
     static let quiet = dyn(l(0.055), d(0.06))
     static let quiet2 = dyn(l(0.10), d(0.11))
+    static let quiet3 = dyn(l(0.15), d(0.16))
+    static let page = dyn(hex(0xe8e6e1), hex(0x000000))
+    static let dangT = dyn(hex(0xb3261e), hex(0xff6874))
+    static let dangTint = dyn(hex(0xe0483e, 0.10), hex(0xf13342, 0.16))
     static let sep = dyn(l(0.13), d(0.12))
     static let sep2 = dyn(l(0.24), d(0.24))
     static let t1 = dyn(hex(0x1d1d1f), hex(0xededed))
@@ -52,9 +56,9 @@ enum T {
 }
 
 extension View {
-    /// Text at a CSS size with the app-wide -0.018em tracking.
+    /// Text at a CSS size. base.css sets body{letter-spacing:0}, so no tracking.
     func css(_ size: CGFloat, _ weight: Font.Weight = .regular, _ color: Color = T.t1) -> some View {
-        font(T.ui(size, weight)).tracking(size * -0.018).foregroundStyle(color)
+        font(T.ui(size, weight)).foregroundStyle(color)
     }
 }
 
