@@ -23,8 +23,8 @@ struct OneToolApp: App {
             SettingsWindowRoot()
                 .environmentObject(store)
         }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
+        .windowToolbarStyle(.unified)
+        .defaultSize(width: 760, height: 560)
         .defaultPosition(.center)
     }
 }
@@ -84,14 +84,7 @@ struct SettingsMenuItem: View {
     }
 }
 
-/// The settings window's content; its ✕ and Esc close the window.
+/// The settings window's content, in the System Settings style.
 struct SettingsWindowRoot: View {
-    @Environment(\.dismissWindow) private var dismissWindow
-    var body: some View {
-        ZStack(alignment: .top) {
-            T.bg
-            SettingsSheet(isOpen: Binding(get: { true }, set: { if !$0 { dismissWindow(id: "settings") } }), inWindow: true)
-        }
-        .ignoresSafeArea()
-    }
+    var body: some View { NativeSettings() }
 }
