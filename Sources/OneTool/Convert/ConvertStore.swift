@@ -113,8 +113,8 @@ struct Toast: Equatable { let title: String; var ok = true; let id = UUID() }
     }
     var destinationCount: Int { Set(tools.map(\.to)).count }
     func sameKind(_ row: ConvertRow) -> [ConvertRow] { rows.filter { $0.kind == .queue && $0.from == row.from } }
-    func scopeLabel(_ row: ConvertRow) -> String {
-        guard scopeAll else { return "This file" }
+    func scopeLabel(_ row: ConvertRow) -> String { scopeAll ? allScopeLabel(row) : "This file" }
+    func allScopeLabel(_ row: ConvertRow) -> String {
         let n = sameKind(row).count
         return n == 1 ? "The 1 \(row.from) file" : "All \(n) \(row.from) files"
     }

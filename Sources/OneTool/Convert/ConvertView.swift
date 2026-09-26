@@ -265,7 +265,15 @@ struct RoutePopover: View {
 
             HStack(spacing: 8) {
                 HeadCell("Scope")
-                Button { store.scopeAll.toggle() } label: {
+                // A real drop-down: both scopes listed, the current one ticked.
+                Menu {
+                    Picker("Scope", selection: $store.scopeAll) {
+                        Text("This file").tag(false)
+                        Text(store.allScopeLabel(row)).tag(true)
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                } label: {
                     HStack(spacing: 10) {
                         Text(store.scopeLabel(row)).css(12.5).frame(maxWidth: .infinity, alignment: .leading)
                         Chevron()
@@ -273,7 +281,11 @@ struct RoutePopover: View {
                     .padding(.horizontal, 9).frame(minHeight: 28)
                     .hoverFill(T.quiet, T.quiet2, radius: 8)
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(T.sep2, lineWidth: 1))
-                }.buttonStyle(PressStyle())
+                    .contentShape(Rectangle())
+                }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+                .menuIndicator(.hidden)
             }
             .padding(.horizontal, 12).padding(.vertical, 9)
             .background(RoundedRectangle(cornerRadius: 9).fill(T.surface))
