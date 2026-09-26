@@ -49,18 +49,23 @@ struct ContentView: View {
             }
             .background(T.bg)
         }
+        // The web top bar, hosted in the native toolbar so macOS draws the new traffic
+        // lights, but with the per-item glass capsules turned off.
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                CogButton(dot: Helpers.missing > 0) { settingsOpen = true }
-            }
-            ToolbarItem(placement: .principal) {
-                Picker("Page", selection: $page) {
-                    ForEach(Page.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                HStack(spacing: 16) {
+                    CogButton(dot: Helpers.missing > 0) { settingsOpen = true }
+                    ForEach(Page.allCases, id: \.self) { p in
+                        NavButton(title: p.rawValue, active: p == page) { page = p }
+                    }
                 }
-                .pickerStyle(.segmented).fixedSize()
+                .padding(.leading, 4)
             }
-            ToolbarItem(placement: .primaryAction) { SearchButton() }
+            .sharedBackgroundVisibility(.hidden)
+            ToolbarItem(placement: .principal) { SearchButton() }
+                .sharedBackgroundVisibility(.hidden)
         }
+        .toolbarBackground(T.bg, for: .windowToolbar)
         .navigationTitle("")
         .focusEffectDisabled()
         .sheet(isPresented: $settingsOpen) {
