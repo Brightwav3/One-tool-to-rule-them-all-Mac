@@ -5,6 +5,9 @@ let appVersion = "2.2.1"
 /// Port of renderSettings() + converter/ui/styles/settings.css.
 struct SettingsSheet: View {
     @Binding var isOpen: Bool
+    /// In its own window the traffic lights close it and sit over the sidebar,
+    /// so the ✕ goes and the sidebar starts below the lights.
+    var inWindow = false
     @EnvironmentObject var store: SettingsStore
     @State private var tab = "general"
     @State private var query = ""
@@ -32,7 +35,8 @@ struct SettingsSheet: View {
             Rectangle().fill(T.sep).frame(width: 1)
             main
         }
-        .frame(width: 880, height: 600)
+        .frame(width: 880)
+        .frame(minHeight: 600, maxHeight: .infinity)
         .background(T.bg)
         .onExitCommand { isOpen = false }
     }
@@ -49,7 +53,7 @@ struct SettingsSheet: View {
             .padding(.horizontal, 10).frame(height: 32)
             .background(RoundedRectangle(cornerRadius: 8).fill(T.surface))
             .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(T.sep2, lineWidth: 1))
-            .padding(EdgeInsets(top: 12, leading: 12, bottom: 10, trailing: 12))
+            .padding(EdgeInsets(top: inWindow ? 44 : 12, leading: 12, bottom: 10, trailing: 12))
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
@@ -97,7 +101,7 @@ struct SettingsSheet: View {
             HStack(spacing: 10) {
                 Text(q.isEmpty ? SettingsData.tabs.first { $0.id == tab }!.name : "Search results")
                     .css(12.5, .semibold, T.t2).frame(maxWidth: .infinity, alignment: .leading)
-                CloseButton { isOpen = false }
+                if !inWindow { CloseButton { isOpen = false } }
             }
             .padding(.leading, 24).padding(.trailing, 12).frame(height: 44)
 

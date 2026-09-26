@@ -6,7 +6,7 @@ struct OneToolApp: App {
     init() { NSApplication.shared.setActivationPolicy(.regular) }
 
     var body: some Scene {
-        WindowGroup("One Tool") {
+        Window("One Tool", id: "main") {
             ContentView()
                 .environmentObject(store)
                 .frame(minWidth: 900, minHeight: 600)
@@ -15,11 +15,17 @@ struct OneToolApp: App {
         .defaultSize(width: 980, height: 700)
         .windowToolbarStyle(.unified)
         .commands {
-            CommandGroup(replacing: .appSettings) {
-                Button("Settings…") { NotificationCenter.default.post(name: .openSettings, object: nil) }
-                    .keyboardShortcut(",", modifiers: .command)
-            }
+            CommandGroup(replacing: .appSettings) { SettingsMenuItem() }
         }
+
+        // Settings is its own window, opened above One Tool with the cog or ⌘,.
+        Window("Settings", id: "settings") {
+            SettingsWindowRoot()
+                .environmentObject(store)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 }
 
@@ -27,7 +33,7 @@ struct OneToolApp: App {
 struct ContentView: View {
     @EnvironmentObject var store: SettingsStore
     @State private var page: Page = .convert
-    @State private var settingsOpen = false
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         ZStack {
@@ -54,7 +60,7 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: 16) {
-                    CogButton(dot: Helpers.missing > 0) { settingsOpen = true }
+                    CogButton(dot: Helpers.missing > 0) { openWindow(id: "settings") }
                     ForEach(Page.allCases, id: \.self) { p in
                         NavButton(title: p.rawValue, active: p == page) { page = p }
                     }
@@ -68,11 +74,24 @@ struct ContentView: View {
         .toolbarBackground(T.bg, for: .windowToolbar)
         .navigationTitle("")
         .focusEffectDisabled()
-        .sheet(isPresented: $settingsOpen) {
-            SettingsSheet(isOpen: $settingsOpen).environmentObject(store)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in settingsOpen = true }
     }
 }
 
-extension Notification.Name { static let openSettings = Notification.Name("onetool.openSettings") }
+struct SettingsMenuItem: View {
+    @Environment(\.openWindow) private var openWindow
+    var body: some View {
+        Button("Settings…") { openWindow(id: "settings") }.keyboardShortcut(",", modifiers: .command)
+    }
+}
+
+/// The settings window's content; its ✕ and Esc close the window.
+struct SettingsWindowRoot: View {
+    @Environment(\.dismissWindow) private var dismissWindow
+    var body: some View {
+        ZStack(alignment: .top) {
+            T.bg
+            SettingsSheet(isOpen: Binding(get: { true }, set: { if !$0 { dismissWindow(id: "settings") } }), inWindow: true)
+        }
+        .ignoresSafeArea()
+    }
+}
