@@ -64,8 +64,13 @@ struct ContentView: View {
                 .zIndex(1)
                 // The inspector beside the work card, on the window's own grey.
                 if page == .convert && panelWidth > 0 {
+                    // Below its readable minimum the panel keeps its layout and is clipped
+                    // and faded by the edge, rather than squeezing into a narrow column.
                     InspectorView(store: convert)
-                        .frame(width: panelWidth)
+                        .frame(width: max(panelWidth, PanelResizeHandle.minWidth))
+                        .frame(width: panelWidth, alignment: .leading)
+                        .clipped()
+                        .opacity(min(1, panelWidth / PanelResizeHandle.minWidth))
                         .transition(.asymmetric(
                             insertion: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.4)),
                             removal: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.35))))

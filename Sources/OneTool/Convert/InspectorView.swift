@@ -378,15 +378,20 @@ struct PanelResizeHandle: View {
                 .gesture(
                     DragGesture(minimumDistance: 1, coordinateSpace: .global)
                         .onChanged { g in
+                            // Follow the pointer all the way to the edge; no snapping mid-drag.
                             let s = start ?? width
                             if start == nil { start = s }
                             let window = NSApp.keyWindow?.frame.width ?? 1200
                             let cap = max(Self.minWidth, min(Self.maxWidth, window - 360))
-                            let raw = min(max(s - g.translation.width, 0), cap)
                             var t = Transaction(); t.disablesAnimations = true
-                            withTransaction(t) { width = raw <= Self.minWidth / 2 ? 0 : max(raw, Self.minWidth).rounded() }
+                            withTransaction(t) { width = min(max(s - g.translation.width, 0), cap).rounded() }
                         }
-                        .onEnded { _ in start = nil }
+                        .onEnded { _ in
+                            start = nil
+                            // On release it settles: shut below half the minimum, else at least the minimum.
+                            let settled = width <= Self.minWidth / 2 ? 0 : max(width, Self.minWidth)
+                            withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: settled == 0 ? 0.35 : 0.4)) { width = settled }
+                        }
                 )
                 .frame(width: geo.size.width)
         }
