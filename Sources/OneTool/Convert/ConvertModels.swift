@@ -20,6 +20,9 @@ struct ConvertRow: Identifiable, Hashable {
     var helper: String? = nil // for blocked rows
     var size = ""
     var when = ""
+    var bytes = 0
+    var conv = ""
+    var outputPath: String? = nil
 
     /// thumbKind(): the label printed in the tile's pill.
     var tileLabel: String {
@@ -70,6 +73,24 @@ enum Filter: String, CaseIterable, Identifiable {
 enum Sort: String, CaseIterable { case newest = "Newest", oldest = "Oldest", name = "Name", largest = "Largest" }
 
 enum SampleData {
+    /// The converter registry, as /api/tools returned it on this Mac.
+    static let tools: [Tool] = """
+    cbz-epub CBZ EPUB ready Comics|cbr-epub CBR EPUB ready Comics|cbz-pdf CBZ PDF ready Comics|cbr-pdf CBR PDF ready Comics
+    cbr-cbz CBR CBZ ready Comics|pdf-cbz PDF CBZ ready Comics|heic-jpg HEIC JPG ready Images|heic-png HEIC PNG ready Images
+    heic-webp HEIC WebP ready Images|heic-pdf HEIC PDF ready Images|png-webp PNG WebP ready Images|png-jpg PNG JPG ready Images
+    jpg-png JPG PNG ready Images|jpg-webp JPG WebP ready Images|webp-jpg WebP JPG ready Images|webp-png WebP PNG ready Images
+    webp-pdf WebP PDF ready Images|png-pdf PNG PDF ready Images|jpg-pdf JPG PDF ready Images|pdf-jpg PDF JPG ready Images
+    pdf-png PDF PNG ready Images|svg-png SVG PNG ready Images|svg-pdf SVG PDF ready Images|raw-dng RAW DNG soon Images
+    docx-pdf DOCX PDF ready Documents|docx-epub DOCX EPUB ready Documents|docx-txt DOCX TXT ready Documents
+    md-pdf MD PDF soon Documents|pdf-txt PDF TXT ready Documents|pdf-md PDF MD ready Documents|pdf-epub PDF EPUB ready Documents
+    epub-cbz EPUB CBZ ready Ebooks|epub-mobi EPUB MOBI ready Ebooks|epub-txt EPUB TXT ready Ebooks|epub-pdf EPUB PDF ready Ebooks
+    mov-mp4 MOV MP4 helper Video|items-zip Items ZIP ready Archives|items-cbz Items CBZ ready Comics
+    """.split(whereSeparator: { $0 == "|" || $0 == "\n" }).compactMap { line in
+        let p = line.split(separator: " ").map(String.init)
+        guard p.count == 5 else { return nil }
+        return Tool(id: p[0], from: p[1], to: p[2], state: Tool.State(rawValue: p[3]) ?? .ready, cat: p[4])
+    }
+
     static let rows: [ConvertRow] = [
         .init(id: "q1", kind: .queue, name: "Saga Vol. 1.cbz", from: "CBZ", to: "EPUB", state: .running, cat: "comics", thumb: .comic, progress: 0.42, units: 160, doneUnits: 67),
         .init(id: "q2", kind: .queue, name: "Quarterly report final.docx", from: "DOCX", to: "PDF", state: .running, cat: "documents"),
