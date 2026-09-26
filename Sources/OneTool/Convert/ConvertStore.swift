@@ -26,6 +26,10 @@ struct Toast: Equatable { let title: String; var ok = true; let id = UUID() }
     @Published var selected: Set<String> = []
     private var selectAnchor: String?
     @Published var selectedHistory: String?
+    /// The queue row the inspector edits (selectedId in app-state.js).
+    @Published var focused: String?
+    enum ApplyScope { case this, selected, all }
+    @Published var applyScope: ApplyScope = .this
 
     @Published var pickerFor: String?
     @Published var scopeAll = false
@@ -75,11 +79,12 @@ struct Toast: Equatable { let title: String; var ok = true; let id = UUID() }
             (selected, selectAnchor) = update(rows.filter { $0.kind == .queue }.map(\.id), selected, selectAnchor, row.id,
                                              shift: flags.contains(.shift), toggle: flags.contains(.command))
             selectedHistory = nil
+            focused = selected.contains(row.id) ? row.id : selected.first
         } else {
             (checked, checkAnchor) = update(visible.filter { $0.kind == .history }.map(\.id), checked, checkAnchor, row.id,
                                            shift: flags.contains(.shift), toggle: flags.contains(.command))
             selectedHistory = row.id
-            selected = []; selectAnchor = nil
+            selected = []; selectAnchor = nil; focused = nil
         }
     }
 
@@ -92,6 +97,31 @@ struct Toast: Equatable { let title: String; var ok = true; let id = UUID() }
     func checkAll() {
         let ids = Set(visible.map(\.id))
         if ids.isSubset(of: checked) { checked.subtract(ids) } else { checked.formUnion(ids) }
+    }
+
+    var focusedRow: ConvertRow? { rows.first { $0.id == focused && $0.kind == .queue } }
+    var historyRow: ConvertRow? { rows.first { $0.id == selectedHistory } }
+    var queue: [ConvertRow] { rows.filter { $0.kind == .queue } }
+
+    /// Renaming names the output; the extension belongs to the route.
+    func rename(_ row: ConvertRow, stem: String) {
+        guard let i = rows.firstIndex(where: { $0.id == row.id }), let out = rows[i].outputPath else { return }
+        let ns = out as NSString
+        rows[i].outputPath = (ns.deletingLastPathComponent as NSString).appendingPathComponent(stem + "." + ns.pathExtension)
+        if row.kind == .history { rows[i].name = stem + "." + ns.pathExtension }
+        show("Renamed")
+    }
+    func requeueOne(_ row: ConvertRow) {
+        guard let i = rows.firstIndex(where: { $0.id == row.id }) else { return }
+        rows[i].kind = .queue; rows[i].state = .idle; rows[i].size = ""; rows[i].when = ""
+        selectedHistory = nil; checked.remove(row.id)
+        show("Queued again")
+    }
+    func reveal(_ path: String?) {
+        guard let path else { return }
+        let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+        if FileManager.default.fileExists(atPath: url.path) { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+        else { show("The file isn't there anymore", ok: false) }
     }
 
     func open(_ row: ConvertRow) {

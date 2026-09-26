@@ -23,6 +23,16 @@ struct ConvertRow: Identifiable, Hashable {
     var bytes = 0
     var conv = ""
     var outputPath: String? = nil
+    var sourcePath = ""
+    var sourceBytes = 0
+
+    /// metaLine(): "160 pages · 84 MB", "image · 2.9 MB".
+    var metaLine: String {
+        var bits: [String] = []
+        if units > 1 { bits.append("\(units) pages") } else if thumb == .image { bits.append("image") }
+        if sourceBytes > 0 { bits.append(fmtSize(sourceBytes)) }
+        return bits.joined(separator: " · ")
+    }
 
     /// thumbKind(): the label printed in the tile's pill.
     var tileLabel: String {
@@ -92,15 +102,24 @@ enum SampleData {
     }
 
     static let rows: [ConvertRow] = [
-        .init(id: "q1", kind: .queue, name: "Saga Vol. 1.cbz", from: "CBZ", to: "EPUB", state: .running, cat: "comics", thumb: .comic, progress: 0.42, units: 160, doneUnits: 67),
-        .init(id: "q2", kind: .queue, name: "Quarterly report final.docx", from: "DOCX", to: "PDF", state: .running, cat: "documents"),
-        .init(id: "q3", kind: .queue, name: "IMG_4021.heic", from: "HEIC", to: "JPG", state: .queued, cat: "images", thumb: .image),
-        .init(id: "q4", kind: .queue, name: "Holiday clip.mov", from: "MOV", to: "MP4", state: .blocked, cat: "video", helper: "ffmpeg"),
-        .init(id: "q5", kind: .queue, name: "Lecture notes.pdf", from: "PDF", to: "EPUB", state: .idle, cat: "documents"),
-        .init(id: "q6", kind: .queue, name: "Invoice 0231.pdf", from: "PDF", to: "TXT", state: .done, cat: "documents", size: "12 KB", when: "07:51 PM"),
-        .init(id: "h1", kind: .history, name: "Bundle.zip", from: "Items", to: "ZIP", state: .done, cat: "documents", size: "183 B", when: "07:43 PM"),
-        .init(id: "h2", kind: .history, name: "Moon Knight 01.epub", from: "CBR", to: "EPUB", state: .done, cat: "comics", size: "48.2 MB", when: "Yesterday"),
-        .init(id: "h3", kind: .history, name: "Scan 2026-09-01.pdf", from: "JPG", to: "PDF", state: .stopped, cat: "images"),
-        .init(id: "h4", kind: .history, name: "Old draft.txt", from: "EPUB", to: "TXT", state: .missing, cat: "documents", size: "4 KB", when: "Sep 12"),
+        .init(id: "q1", kind: .queue, name: "Saga Vol. 1.cbz", from: "CBZ", to: "EPUB", state: .running, cat: "comics", thumb: .comic, progress: 0.42, units: 160, doneUnits: 67, outputPath: "~/Converted/Saga Vol. 1.epub", sourcePath: "~/Downloads/Saga Vol. 1.cbz", sourceBytes: 84200000),
+        .init(id: "q2", kind: .queue, name: "Quarterly report final.docx", from: "DOCX", to: "PDF", state: .running, cat: "documents", outputPath: "~/Converted/Quarterly report final.pdf", sourcePath: "~/Documents/Quarterly report final.docx", sourceBytes: 412000),
+        .init(id: "q3", kind: .queue, name: "IMG_4021.heic", from: "HEIC", to: "JPG", state: .queued, cat: "images", thumb: .image, outputPath: "~/Converted/IMG_4021.jpg", sourcePath: "~/Pictures/IMG_4021.heic", sourceBytes: 2900000),
+        .init(id: "q4", kind: .queue, name: "Holiday clip.mov", from: "MOV", to: "MP4", state: .blocked, cat: "video", helper: "ffmpeg", outputPath: "~/Converted/Holiday clip.mp4", sourcePath: "~/Movies/Holiday clip.mov", sourceBytes: 210000000),
+        .init(id: "q5", kind: .queue, name: "Lecture notes.pdf", from: "PDF", to: "EPUB", state: .idle, cat: "documents", outputPath: "~/Converted/Lecture notes.epub", sourcePath: "~/Documents/Lecture notes.pdf", sourceBytes: 1300000),
+        .init(id: "q6", kind: .queue, name: "Invoice 0231.pdf", from: "PDF", to: "TXT", state: .done, cat: "documents", size: "12 KB", when: "07:51 PM", outputPath: "~/Converted/Invoice 0231.txt", sourcePath: "~/Downloads/Invoice 0231.pdf", sourceBytes: 88000),
+        .init(id: "h1", kind: .history, name: "Bundle.zip", from: "Items", to: "ZIP", state: .done, cat: "documents", size: "183 B", when: "07:43 PM", outputPath: "~/Converted/Bundle.zip", sourcePath: "~/Desktop/Bundle", sourceBytes: 0),
+        .init(id: "h2", kind: .history, name: "Moon Knight 01.epub", from: "CBR", to: "EPUB", state: .done, cat: "comics", size: "48.2 MB", when: "Yesterday", outputPath: "~/Converted/Moon Knight 01.epub", sourcePath: "~/Downloads/Moon Knight 01.cbr", sourceBytes: 51000000),
+        .init(id: "h3", kind: .history, name: "Scan 2026-09-01.pdf", from: "JPG", to: "PDF", state: .stopped, cat: "images", outputPath: "~/Converted/Scan 2026-09-01.pdf", sourcePath: "~/Pictures/Scan 2026-09-01.jpg", sourceBytes: 3100000),
+        .init(id: "h4", kind: .history, name: "Old draft.txt", from: "EPUB", to: "TXT", state: .missing, cat: "documents", size: "4 KB", when: "Sep 12", outputPath: "~/Converted/Old draft.txt", sourcePath: "~/Books/Old draft.epub", sourceBytes: 120000),
     ]
+}
+
+/// fmtSize() from core/formatters.js: base 1024, one decimal below 10.
+func fmtSize(_ bytes: Int) -> String {
+    guard bytes > 0 else { return "" }
+    let units = ["B", "KB", "MB", "GB"]
+    var v = Double(bytes), i = 0
+    while v >= 1024 && i < units.count - 1 { v /= 1024; i += 1 }
+    return String(format: v >= 10 || i == 0 ? "%.0f %@" : "%.1f %@", v, units[i])
 }

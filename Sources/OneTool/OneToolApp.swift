@@ -12,7 +12,7 @@ struct OneToolApp: App {
                 .frame(minWidth: 900, minHeight: 600)
                 .onAppear { store.applyTheme(); NSApp.activate(ignoringOtherApps: true) }
         }
-        .defaultSize(width: 980, height: 700)
+        .defaultSize(width: 1180, height: 720)
         .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(replacing: .appSettings) { SettingsMenuItem() }
@@ -34,13 +34,15 @@ struct ContentView: View {
     @EnvironmentObject var store: SettingsStore
     @State private var page: Page = .convert
     @Environment(\.openWindow) private var openWindow
+    @StateObject private var convert = ConvertStore()
 
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
+                HStack(spacing: 0) {
                 Group {
                     switch page {
-                    case .convert: ConvertView()
+                    case .convert: ConvertView(store: convert)
                     case .creator:
                         Text("Creator isn't ported yet.").css(13, .regular, T.t3)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -52,6 +54,17 @@ struct ContentView: View {
                 .overlay(UnevenRoundedRectangle(topTrailingRadius: 14, style: .continuous).stroke(T.sep, lineWidth: 1).padding(.leading, -1).padding(.bottom, -1))
                 .shadow(color: .black.opacity(0.05), radius: 1, y: 1)
                 .shadow(color: .black.opacity(0.08), radius: 11, y: 8)
+                .zIndex(1)
+                // The inspector: 308pt beside the work card, on the window's own grey.
+                if page == .convert {
+                    InspectorView(store: convert)
+                        .frame(width: 308)
+                        .transition(.asymmetric(
+                            insertion: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.4)),
+                            removal: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.35))))
+                }
+                }
+                .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.4), value: page)
             }
             .background(T.bg)
         }

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// renderConvert() + converter/ui/styles/convert.css (the `.u-*` rules).
 struct ConvertView: View {
-    @StateObject private var store = ConvertStore()
+    @ObservedObject var store: ConvertStore
 
     var body: some View {
         VStack(spacing: 0) {
