@@ -36,7 +36,10 @@ struct ContentView: View {
     @Environment(\.openWindow) private var openWindow
     @StateObject private var convert = ConvertStore()
     /// panel-resize.js: 308 by default, remembered across launches.
-    @AppStorage("onetool.panelWidth") private var panelWidth = 308.0
+    @AppStorage("onetool.panelWidth") private var savedPanelWidth = 308.0
+    /// The live width. It lives in view state so the snap animates; UserDefaults
+    /// changes don't carry the animation transaction.
+    @State private var panelWidth = UserDefaults.standard.object(forKey: "onetool.panelWidth") as? Double ?? 308
 
     var body: some View {
         ZStack {
@@ -63,7 +66,7 @@ struct ContentView: View {
                 .padding(.trailing, page == .convert && panelWidth == 0 ? 8 : 0)
                 .zIndex(1)
                 // The inspector beside the work card, on the window's own grey.
-                if page == .convert && panelWidth > 0 {
+                if page == .convert {
                     // Below its readable minimum the panel keeps its layout and is clipped
                     // and faded by the edge, rather than squeezing into a narrow column.
                     InspectorView(store: convert)
@@ -71,6 +74,7 @@ struct ContentView: View {
                         .frame(width: panelWidth, alignment: .leading)
                         .clipped()
                         .opacity(min(1, panelWidth / PanelResizeHandle.minWidth))
+                        .allowsHitTesting(panelWidth > 0)
                         .transition(.asymmetric(
                             insertion: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.4)),
                             removal: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.35))))
@@ -82,6 +86,7 @@ struct ContentView: View {
         }
         // The web top bar, hosted in the native toolbar so macOS draws the new traffic
         // lights, but with the per-item glass capsules turned off.
+        .onChange(of: panelWidth) { _, w in savedPanelWidth = w }
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: 16) {
