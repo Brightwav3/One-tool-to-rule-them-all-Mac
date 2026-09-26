@@ -35,6 +35,8 @@ struct ContentView: View {
     @State private var page: Page = .convert
     @Environment(\.openWindow) private var openWindow
     @StateObject private var convert = ConvertStore()
+    /// panel-resize.js: 308 by default, remembered across launches.
+    @AppStorage("onetool.panelWidth") private var panelWidth = 308.0
 
     var body: some View {
         ZStack {
@@ -54,11 +56,16 @@ struct ContentView: View {
                 .overlay(UnevenRoundedRectangle(topTrailingRadius: 14, style: .continuous).stroke(T.sep, lineWidth: 1).padding(.leading, -1).padding(.bottom, -1))
                 .shadow(color: .black.opacity(0.05), radius: 1, y: 1)
                 .shadow(color: .black.opacity(0.08), radius: 11, y: 8)
+                .overlay(alignment: .trailing) {
+                    if page == .convert { PanelResizeHandle(width: $panelWidth) }
+                }
+                // With the panel closed the card keeps a slim gutter at the window edge.
+                .padding(.trailing, page == .convert && panelWidth == 0 ? 8 : 0)
                 .zIndex(1)
-                // The inspector: 308pt beside the work card, on the window's own grey.
-                if page == .convert {
+                // The inspector beside the work card, on the window's own grey.
+                if page == .convert && panelWidth > 0 {
                     InspectorView(store: convert)
-                        .frame(width: 308)
+                        .frame(width: panelWidth)
                         .transition(.asymmetric(
                             insertion: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.4)),
                             removal: .offset(x: 32).combined(with: .opacity).animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.35))))

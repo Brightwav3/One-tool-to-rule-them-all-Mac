@@ -359,3 +359,39 @@ struct BatchPanel: View {
         }
     }
 }
+
+/// The 18pt strip on the work card's right edge that resizes the inspector.
+/// Rules from panel-resize.js: capped at 520 (and window − 360); below 240 it
+/// stops being a panel, and past half of that it snaps shut.
+struct PanelResizeHandle: View {
+    @Binding var width: Double
+    @State private var start: Double?
+    static let minWidth = 240.0, maxWidth = 520.0
+
+    var body: some View {
+        GeometryReader { geo in
+            Color.clear
+                .contentShape(Rectangle())
+                .onHover { inside in
+                    if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+                }
+                .gesture(
+                    DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                        .onChanged { g in
+                            let s = start ?? width
+                            if start == nil { start = s }
+                            let window = NSApp.keyWindow?.frame.width ?? 1200
+                            let cap = max(Self.minWidth, min(Self.maxWidth, window - 360))
+                            let raw = min(max(s - g.translation.width, 0), cap)
+                            var t = Transaction(); t.disablesAnimations = true
+                            withTransaction(t) { width = raw <= Self.minWidth / 2 ? 0 : max(raw, Self.minWidth).rounded() }
+                        }
+                        .onEnded { _ in start = nil }
+                )
+                .frame(width: geo.size.width)
+        }
+        .frame(width: 18)
+        .offset(x: 9)
+        .accessibilityLabel("Resize sidebar")
+    }
+}
